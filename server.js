@@ -17,7 +17,7 @@ const io = new Server(server, {
   }
 });
 
-// Serve static files in production
+// Serve static files in productions
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static('dist'));
   app.get('*', (req, res) => {
