@@ -2,6 +2,7 @@ import React from 'react';
 import Tile from './Tile';
 import Piece from './Piece';
 import { type Position, type PlayerState } from '../types';
+import { BOARD_CONFIG } from '#src/config.tsx';
 
 interface PlayerBoardProps {
   player: number;
@@ -39,9 +40,9 @@ export default function PlayerBoard({
       </h2>
       <div className="bg-white p-4 rounded-xl shadow-2xl">
         <div className="grid grid-cols-8 gap-0 border-4 border-gray-800 rounded-lg overflow-hidden">
-          {Array.from({ length: 8 }, (_, y) => (
+          {Array.from({ length: BOARD_CONFIG.length }, (_, y) => (
             <React.Fragment key={y}>
-              {Array.from({ length: 8 }, (_, x) => {
+              {Array.from({ length: BOARD_CONFIG.width }, (_, x) => {
                 const pos = { x, y };
                 const posKey = positionToKey(pos);
                 const hasPiece = state.position.x === x && state.position.y === y;

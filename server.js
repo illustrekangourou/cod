@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import { nanoid } from 'nanoid';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { BOARD_CONFIG } from "#src/config";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -78,17 +79,14 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('move', ({ gameState, currentTurns }) => {
+  socket.on('move', ({ selectedMove, selectedDestroy }) => {
     try {
       const gameId = playerSockets.get(socket.id);
       if (!gameId) return;
       
       const game = games.get(gameId);
       if (!game) return;
-
-      game.gameState = gameState;
-      game.currentTurns = currentTurns;
-      
+      // TODO: check if selectedMove and selectedDestroy are valid, then update the game state accordingly
       io.to(gameId).emit('gameUpdate', { gameState: game.gameState, currentTurns });
     } catch (error) {
       console.error('Error processing move:', error);
@@ -123,4 +121,5 @@ app.get('/api/health', (req, res) => {
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`Game layout: ${BOARD_CONFIG.length}x${BOARD_CONFIG.width}`);
 });

@@ -9,7 +9,6 @@ interface GameStatusProps {
   gameOver: boolean;
   showResults: boolean;
   onValidate?: () => void;
-  onContinue: () => void;
   onReset: () => void;
 }
 
@@ -20,7 +19,6 @@ export default function GameStatus({
   gameOver,
   showResults,
   onValidate,
-  onContinue,
   onReset
 }: GameStatusProps) {
   const getPhaseMessage = () => {
@@ -81,21 +79,12 @@ export default function GameStatus({
       <p className="text-lg font-semibold text-gray-700">{getPhaseMessage()}</p>
       
       <div className="flex gap-2">
-        {!gameOver && !showResults && onValidate && (
+        {!gameOver && onValidate && (
           <button
             onClick={onValidate}
             className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
           >
             Validate Turn
-          </button>
-        )}
-        
-        {showResults && !gameOver && (
-          <button
-            onClick={onContinue}
-            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
-          >
-            Continue
           </button>
         )}
         

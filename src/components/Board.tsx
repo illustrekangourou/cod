@@ -68,112 +68,20 @@ export default function Board({ socket, gameId, playerNumber }: BoardProps) {
   const handleTileClick = (boardIndex: number, x: number, y: number) => {
     if (gameState.gameOver || waitingForOpponent || opponentDisconnected) return;
     if (gameState.currentTurns[playerNumber].validated) return;
-    
     const clickedPos = { x, y };
-    const otherPlayer = playerNumber === 0 ? 1 : 0;
-    
+    if (!isValidMove(clickedPos, gameState.players[boardIndex].position)) {
+      return;
+    }
     if (boardIndex === playerNumber) {
-      if (isValidMove(gameState.players[playerNumber].position, clickedPos)) {
-        const newGameState = {
-          ...gameState,
-          currentTurns: gameState.currentTurns.map((turn, i) => 
-            i === playerNumber 
-              ? { ...turn, selectedMove: clickedPos }
-              : turn
-          ) as [PlayerTurn, PlayerTurn]
-        };
-        setGameState(newGameState);
-        socket.emit('move', { gameState: newGameState, currentTurns: newGameState.currentTurns });
-      }
+      gameState.currentTurns[playerNumber].selectedMove = clickedPos;
     } else {
-      const posKey = positionToKey(clickedPos);
-      if (!gameState.players[otherPlayer].destroyedTiles.includes(posKey)) {
-        const newGameState = {
-          ...gameState,
-          currentTurns: gameState.currentTurns.map((turn, i) => 
-            i === playerNumber 
-              ? { ...turn, selectedDestroy: clickedPos }
-              : turn
-          ) as [PlayerTurn, PlayerTurn]
-        };
-        setGameState(newGameState);
-        socket.emit('move', { gameState: newGameState, currentTurns: newGameState.currentTurns });
-      }
+      gameState.currentTurns[playerNumber].selectedDestroy = clickedPos;
     }
   };
 
   const handleValidateMove = () => {
-    const newGameState = {
-      ...gameState,
-      currentTurns: gameState.currentTurns.map((turn, i) => 
-        i === playerNumber 
-          ? { ...turn, validated: true }
-          : turn
-      ) as [PlayerTurn, PlayerTurn]
-    };
-    setGameState(newGameState);
-    socket.emit('move', { gameState: newGameState, currentTurns: newGameState.currentTurns });
-    setWaitingForOpponent(true);
-
-    if (gameState.currentTurns[playerNumber === 0 ? 1 : 0].validated) {
-      setPreviousPositions([
-        gameState.players[0].position,
-        gameState.players[1].position
-      ]);
-      const previewState = calculatePreviewState(gameState);
-      setPreviewState(previewState);
-      setShowResults(true);
-    }
-  };
-
-  const calculatePreviewState = (currentState: GameState): GameState => {
-    const newPlayers = currentState.players.map(player => ({
-      ...player,
-      destroyedTiles: [...player.destroyedTiles]
-    })) as [typeof currentState.players[0], typeof currentState.players[1]];
-    
-    [0, 1].forEach(playerIndex => {
-      const turn = currentState.currentTurns[playerIndex];
-      const otherIndex = playerIndex === 0 ? 1 : 0;
-      
-      if (turn.selectedDestroy) {
-        newPlayers[otherIndex].destroyedTiles.push(positionToKey(turn.selectedDestroy));
-      }
-    });
-
-    [0, 1].forEach(playerIndex => {
-      const turn = currentState.currentTurns[playerIndex];
-      
-      if (turn.selectedMove && newPlayers[playerIndex].destroyedTiles.includes(
-        positionToKey(turn.selectedMove)
-      )) {
-        newPlayers[playerIndex].lives -= 1;
-      }
-      if (turn.selectedMove) {
-        newPlayers[playerIndex].position = turn.selectedMove;
-      }
-    });
-
-    return {
-      ...currentState,
-      players: newPlayers,
-    };
-  };
-
-  const handleContinue = () => {
-    if (!previewState) return;
-
-    const newGameState = {
-      players: previewState.players,
-      currentTurns: [{ ...initialPlayerTurn }, { ...initialPlayerTurn }],
-      gameOver: previewState.players.some(p => p.lives <= 0)
-    };
-
-    setGameState(newGameState);
-    socket.emit('move', { gameState: newGameState, currentTurns: newGameState.currentTurns });
-    setPreviewState(null);
-    setShowResults(false);
-    setTurnNumber(prev => prev + 1);
+    const { selectedMove, selectedDestroy } = gameState.currentTurns[playerNumber];
+    socket.emit('move', { selectedMove, selectedDestroy });
   };
 
   const canValidate = () => {
@@ -232,7 +140,6 @@ export default function Board({ socket, gameId, playerNumber }: BoardProps) {
         gameOver={displayState.gameOver}
         showResults={showResults}
         onValidate={canValidate() ? handleValidateMove : undefined}
-        onContinue={handleContinue}
         onReset={() => window.location.reload()}
       />
 
